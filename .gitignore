@@ -1,0 +1,4 @@
+/.gitignore.txt
+/model_checkpoint.h5
+/README.md.txt
+/__pycache__
