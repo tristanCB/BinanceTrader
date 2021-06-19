@@ -15,7 +15,6 @@ import pandas as pd
 import statistics
 import trader
 
-
 # Apply rolling windows as smoothing
 n = 120
 # Use this as timeframe for trading. --> 
