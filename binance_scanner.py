@@ -36,7 +36,6 @@ worst = None
 highest_variance = None
 highest_std_dev = None
 
-
 for pair in dict_object['unique_pairs']:
     # print(f'Scanning --> {pair}')
 

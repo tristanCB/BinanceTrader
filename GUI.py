@@ -35,10 +35,16 @@ class Application(tk.Frame):
         for kline in klineDate:
             # print('open', kline[1])
             # 8 is index for volume, 2 is index for open price?
-            pair_list.append(float(kline[2]))
+            # pair_list.append(float(kline[2]))
+            # print(f"scanning ---------------------> {self.INDEX_TO_SCAN}")
+            pair_list.append(float(kline[self.INDEX_TO_SCAN]))
             num_trades_list.append(float(kline[8]))
         
-        mean_numberofTrades = statistics.mean(num_trades_list)
+        avgtpm = statistics.mean(num_trades_list)
+
+        if avgtpm < self.TRADES_PER_MINUTE_FILTER:
+            return None
+
         # Normalize
         amin, amax = min(pair_list), max(pair_list)
         for i, val in enumerate(pair_list):
@@ -54,7 +60,7 @@ class Application(tk.Frame):
         # Nondimentional distance from the moving average
         dMA = sum(_[-self.GETSOME:]-pair_list[-self.GETSOME:]) / self.GETSOME
 
-        return averageDerv, varianceDerv, standard_deviationDerv, dMA
+        return averageDerv, varianceDerv, standard_deviationDerv, dMA, avgtpm
 
     def format_url(self, symbol, exchange="BINANCE"):
         return f"https://www.tradingview.com/chart/?symbol={exchange}:{symbol}"
@@ -95,23 +101,26 @@ class Application(tk.Frame):
 
         for i in tickers:
             ticker_result = self.perform_scan(i)
-            self.scan_log[i] = ticker_result
+            self.SCANNED_PAIRS += 1
+            self.title_update()
+            if ticker_result != None:
+                self.scan_log[i] = ticker_result
             formatted_string_log = f'Scanned {i} --> {ticker_result}'
             # print(formatted_string_log)
             self.console.insert(0,formatted_string_log)
             _counter += 1
 
-            if _counter > 10:
+            if (_counter > 10) or i == tickers[-1]:
                 self.topppers.delete(0,'end')
                 self.lowwers.delete(0,'end')
-                print(f"Sorting on {self.index_to_sort}")
-                sorted_scan = sorted(self.scan_log.items(), key=lambda kv: kv[1][self.index_to_sort])
+                print(f"Sorting on {self.INDEX_TO_SORT_ON}")
+                sorted_scan = sorted(self.scan_log.items(), key=lambda kv: kv[1][self.INDEX_TO_SORT_ON])
                 for i in sorted_scan[:10]:
-                    self.topppers.insert('end', f"{i[0]} --> {i[1][self.index_to_sort]}")
+                    self.topppers.insert('end', f"{i[0]} --> {i[1][self.INDEX_TO_SORT_ON]} --> avg Trades per min {i[1][4]}")
                 
                 for i in sorted_scan[-10:]:
-                    self.lowwers.insert('end', f"{i[0]} --> {i[1][self.index_to_sort]}")
-
+                    self.lowwers.insert('end', f"{i[0]} --> {i[1][self.INDEX_TO_SORT_ON]} --> avg Trades per min {i[1][4]}")
+                
                 _counter = 0
 
     def clear_run_anew(self):
@@ -119,8 +128,12 @@ class Application(tk.Frame):
         self.lowwers.delete(0,'end')
         self.console.delete(0,'end')
         self.scan_log = {}
+        self.SCANNED_PAIRS = 0
         self.GETSOME = int(self.input_timeframe.get())
-        self.input_movingSmotthing = int(self.input_timeframe.get())
+        self.n = int(self.input_movingSmotthing.get())
+        self.TRADES_PER_MINUTE_FILTER = int(self.trades_per_min_filter.get())
+        self.INDEX_TO_SCAN = int(self.data_input.get())
+        self.INDEX_TO_SORT_ON = int(self.index_to_sort_on.get())
         self.run_full()
 
     def run_full(self):
@@ -132,16 +145,21 @@ class Application(tk.Frame):
             threading.Thread(target=self.start_scan, args=(i,)).start()
 
     def selection(self):
-        selection = "You selected the option " + str(self.index_to_sort_on.get())
-        self.SORT_ON = self.index_to_sort_on.get()
+        selection = "sorting on " + str(self.index_to_sort_on.get())
         self.clear_run_anew()
-
         print(selection)
+
+    def selection_data(self):
+        print(f"scanning on {self.data_input.get()}")
+        print(self.INDEX_TO_SCAN)
+        self.clear_run_anew()
+    
+    def title_update(self):
+        self.master.title(f"Binance Scanner. Scanned {self.SCANNED_PAIRS}/{self.TOTAL_PAIRS}")
 
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        master.title("Binance Scanner")
         # master.geometry("500x400")
         # master.grid_rowconfigure(0, weight=1)
         # master.grid_columnconfigure(0, weight=1)
@@ -153,9 +171,14 @@ class Application(tk.Frame):
         self.dict_object_tickers = json.load(self.file_object)
         # Apply rolling windows as smoothing
         self.n = 120
+        self.TOTAL_PAIRS = len(self.dict_object_tickers["unique_pairs"])
+        self.SCANNED_PAIRS = 0
+        self.title_update()
         # Use this as timeframe for trading. --> 
         self.GETSOME = 10
-        self.index_to_sort = 3
+        self.INDEX_TO_SCAN = 2
+        self.INDEX_TO_SORT_ON = 3
+        self.TRADES_PER_MINUTE_FILTER = 20
 
         reload(trader)
         # Create the 
@@ -178,15 +201,22 @@ class Application(tk.Frame):
         self.input_timeframe_label.pack(side="left")
 
         self.input_timeframe = tk.Entry(self.settings)
-        self.input_timeframe.insert(0,"10")
+        self.input_timeframe.insert(0,f"{self.GETSOME}")
         self.input_timeframe.pack(side="left")
 
         self.input_movingSmotthing_label = tk.Label(self.settings, text="Moving average smotthing (mins)")
         self.input_movingSmotthing_label.pack(side="left")
 
         self.input_movingSmotthing = tk.Entry(self.settings)
-        self.input_movingSmotthing.insert(0,"120")
+        self.input_movingSmotthing.insert(0,f"{self.n}")
         self.input_movingSmotthing.pack(side="left")
+
+        self.trades_per_min_filter_label = tk.Label(self.settings, text="Trades per min cutoff")
+        self.trades_per_min_filter_label.pack(side="left")
+
+        self.trades_per_min_filter = tk.Entry(self.settings)
+        self.trades_per_min_filter.insert(0,f"{self.TRADES_PER_MINUTE_FILTER}")
+        self.trades_per_min_filter.pack(side="left")
 
         self.rerun_button = tk.Button(self.settings, text="Restart Scan", fg="purple", command=self.clear_run_anew)
         self.rerun_button.pack(side="left")
@@ -201,7 +231,14 @@ class Application(tk.Frame):
         self.R2.pack(side="left")
         self.R3 = tk.Radiobutton(self.settings_main, text="Variance of derivative (Averaged over timeframe)", variable=self.index_to_sort_on, value=2, command=self.selection)
         self.R3.pack(side="left")
-        self.index_to_sort_on.set(3)
+        self.index_to_sort_on.set(self.INDEX_TO_SORT_ON)
+
+        self.data_input = tk.IntVar()
+        self.R1di = tk.Radiobutton(self.settings_main, text="open price", variable=self.data_input, value=2, command=self.selection_data)
+        self.R1di.pack()
+        self.R2di = tk.Radiobutton(self.settings_main, text="volume", variable=self.data_input, value=8, command=self.selection_data)
+        self.R2di.pack()
+        self.data_input.set(self.INDEX_TO_SCAN)
 
         self.quit = tk.Button(self.settings, text="QUIT", fg="red", command=self.master.destroy)
         self.quit.pack(side="left")
