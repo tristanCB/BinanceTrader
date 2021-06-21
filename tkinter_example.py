@@ -74,3 +74,47 @@ myapp.master.maxsize(1000, 400)
 
 # start the program
 myapp.mainloop()
+# %%
+from tkinter import *
+import time
+import random
+import threading
+
+root = Tk()
+root.title("Binance Scanner")
+root.geometry("500x400")
+
+def five_seconds():
+    time.sleep(5)
+    my_label.config(text="5 seconds is up")
+
+def rando():
+    rondom_label.config(text=f'random {random.randint(1,100)}')
+
+my_label = Label(root, text="Hey")
+my_label.pack(pady=20)
+
+my_button1 = Button(root, text="5 seconds", command= threading.Thread(five_seconds).start())
+my_button1.pack(pady=20)
+
+my_button2 = Button(root, text="Rand_int", command= rando)
+my_button2.pack(pady=20)
+
+rondom_label = Label(root, text='')
+rondom_label.pack(pady=20)
+
+root.mainloop()
+# %%
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
+values = [2,3,4,5]
+def square(n):
+   return n * n
+def main():
+    with ThreadPoolExecutor(max_workers = 3) as executor:
+      results = executor.map(square, values)
+      
+    for result in results:
+        print(result)
+if __name__ == '__main__':
+    main()

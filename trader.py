@@ -30,17 +30,19 @@ class biance_api:
         if row == None: return 0
         return row[0]
 
-    def get_kline_timeframe(self, symbol, timeframe='1m', limit=500):
+    def get_kline_timeframe(self, symbol, timeframe='1m', limit=1000):
         url = "https://api.binance.com/api/v3/klines"
         data = requests.get(
             url,
             params=[
                 ('symbol', symbol),
                 ('interval', timeframe),
-                ('limit',1000)
+                ('limit',limit)
                 ],
             )
-        return json.loads(data.content)
+        payload = json.loads(data.content)
+        # pp.pprint(payload)
+        return payload
 
     # GET /api/v3/trades
     def get_depth(self, symbol='DOGEUSDT', limit=1000):
