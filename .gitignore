@@ -3,3 +3,9 @@
 /README.md.txt
 /__pycache__
 /tkinter_examples.py
+/dist
+/build
+/.git
+/archives
+/GUI.spec
+/examples

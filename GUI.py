@@ -166,7 +166,7 @@ class Application(tk.Frame):
         # Stores results
         self.scan_log = {}
 
-        self.file_object = open('binance_pairs.txt', 'r')
+        self.file_object = open('./binance_pairs.txt', 'r')
         # Load JSON file data to a python dict object.
         self.dict_object_tickers = json.load(self.file_object)
         # Apply rolling windows as smoothing
@@ -263,9 +263,10 @@ class Application(tk.Frame):
         self.yScroll_console = tk.Scrollbar(self, orient=tk.VERTICAL)
         self.yScroll_console.grid(row=2, column=1,columnspan=2, sticky=tk.NE+tk.S)
         self.yScroll_console['command'] =  self.console.yview
-        
-root = tk.Tk()
-app = Application(master=root)
-app.mainloop()
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = Application(master=root)
+    app.mainloop()
 
 # %%

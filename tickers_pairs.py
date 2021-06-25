@@ -10,6 +10,7 @@ pp = pprint.PrettyPrinter(indent=4)
 from websocket import create_connection
 import trader
 from importlib import reload
+
 # %%
 reload(trader)
 
@@ -45,7 +46,7 @@ while True:
     # print(pp.pprint(payload))
     print()
     if 'result' not in [i for i in payload]:
-        # print(pp.pprint(payload))
+        print(pp.pprint(payload))
         for i in payload:
             print(i['s'])
             tickers.append(i['s'])
@@ -62,11 +63,11 @@ while True:
     # if payload != {'id': 999, 'result': None}:
     #     if len(payload) not in[7, 11]:
     #         raise ImportWarning()
-
+# %%
 ## SAVE A JSON OBJECT TO FILE
-# # Get a file object with write permission.
-# file_object = open('binance_pairs.txt', 'w')
-# # Save dict data into the JSON file.
-# json.dump({'unique_pairs': list(set(tickers))}, file_object)
-# pp.pprint(set(tickers))
+# Get a file object with write permission.
+file_object = open('binance_pairs.txt', 'w')
+# Save dict data into the JSON file.
+json.dump({'unique_pairs': list(set(tickers))}, file_object)
+pp.pprint(set(tickers))
 ##### 

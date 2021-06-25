@@ -44,6 +44,18 @@ class biance_api:
         # pp.pprint(payload)
         return payload
 
+    def exchange_info(self, symbol):
+        url = "https://api.binance.com/api/v3/exchangeInfo"
+        data = requests.get(
+            url,
+            params=[
+                ('symbol', symbol),
+                ],
+            )
+        payload = json.loads(data.content)
+        # pp.pprint(payload)
+        return payload
+
     # GET /api/v3/trades
     def get_depth(self, symbol='DOGEUSDT', limit=1000):
         url = "https://api.binance.com/api/v3/trades"
