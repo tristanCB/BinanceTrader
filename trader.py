@@ -6,6 +6,10 @@ import pyodbc
 import pandas as pd
 from datetime import datetime
 import uuid
+import hmac
+import hashlib 
+import binascii
+
 pp = pprint.PrettyPrinter(indent=4)
 
 class biance_api:
@@ -23,6 +27,23 @@ class biance_api:
                             "Trusted_Connection=yes;")
         # Connect to databse
         self.cursor = self.cnxn.cursor()
+
+    def trade(self, secret=""):
+        # POST  (HMAC SHA256)
+        headers = { 'nonce': '',
+                    'Key' : 'myKey',
+                    'Sign': '',}
+        payload = { 'command': 'returnCompleteBalances',
+                    'account': 'all'}
+        secret = 'mySecret'
+        
+        url = "https://api.binance.com/api/v3/order/test"
+        def create_sha256_signature(key, message):
+            byte_key = binascii.unhexlify(key)
+            message = message.encode()
+            return hmac.new(byte_key, message, hashlib.sha256).hexdigest().upper()
+
+        create_sha256_signature("E49756B4C8FAB4E48222A3E7F3B97CC3", "TEST STRING")
 
     def get_current_index(self):
         self.cursor.execute("select top 1 [key] from doge2 order by [key] DESC;")
